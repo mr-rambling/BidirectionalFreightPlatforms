@@ -386,44 +386,44 @@ void FBFPHooks::RegisterHooks()
 	// they fill the station and never pass through mInventory to the output belts. In Unload-only the load
 	// buffer simply accumulates (visible in the UI, ready to load if loading is enabled) and the belt backs
 	// up when full. The mode only decides whether that load buffer is later loaded into the wagon.
-	SUBSCRIBE_UOBJECT_METHOD( AFGBuildableTrainPlatformCargo, Factory_CollectInput_Implementation,
-		[]( auto&, AFGBuildableTrainPlatformCargo* self )
+	SUBSCRIBE_UOBJECT_METHOD(AFGBuildableTrainPlatformCargo, Factory_CollectInput_Implementation,
+		[](auto& /*Scope*/, AFGBuildableTrainPlatformCargo* self)
 		{
-			if ( self->GetmFreightCargoType() != EFreightCargoType::FCT_Standard )
+			if (self->GetmFreightCargoType() != EFreightCargoType::FCT_Standard)
 			{
 				return; // not a solid platform: let vanilla run
 			}
-			FBFPPlatform& P = SetupPlatform( self );
-			if ( P.LoadInventory.IsValid() )
+			FBFPPlatform& P = SetupPlatform(self);
+			if (P.LoadInventory.IsValid())
 			{
-				if ( !P.bLoggedCollectFired )
+				if (!P.bLoggedCollectFired)
 				{
 					P.bLoggedCollectFired = true;
-					UE_LOG( LogBFP, Verbose, TEXT( "CollectInput hook ACTIVE on %s: inputs -> load buffer %p" ),
-						*self->GetName(), static_cast<const void*>( P.LoadInventory.Get() ) );
+					UE_LOG(LogBFP, Verbose, TEXT("CollectInput hook ACTIVE on %s: inputs -> load buffer %p"),
+						*self->GetName(), static_cast<const void*>(P.LoadInventory.Get()));
 				}
 				P.CollectSaved = self->GetInventory();
-				self->SetmInventory( P.LoadInventory.Get() );
+				self->SetmInventory(P.LoadInventory.Get());
 			}
-		} );
-	SUBSCRIBE_UOBJECT_METHOD_AFTER( AFGBuildableTrainPlatformCargo, Factory_CollectInput_Implementation,
-		[]( AFGBuildableTrainPlatformCargo* self )
+		});
+	SUBSCRIBE_UOBJECT_METHOD_AFTER(AFGBuildableTrainPlatformCargo, Factory_CollectInput_Implementation,
+		[](AFGBuildableTrainPlatformCargo* self)
 		{
-			if ( FBFPPlatform* P = GPlatforms.Find( self ) )
+			if (FBFPPlatform* P = GPlatforms.Find(self))
 			{
-				if ( P->CollectSaved.IsValid() )
+				if (P->CollectSaved.IsValid())
 				{
-					self->SetmInventory( P->CollectSaved.Get() );
+					self->SetmInventory(P->CollectSaved.Get());
 					P->CollectSaved = nullptr;
 				}
 			}
-		} );
+		});
 
 	// FLUID equivalent: liquid platforms pull input from pipes (Factory_PullPipeInput) instead of belts.
 	// Same policy: ALWAYS route the pull into the load buffer (any mode) so it fills the station without
 	// passing through mInventory to the output pipes. Unload-only just accumulates in the load buffer.
 	SUBSCRIBE_UOBJECT_METHOD( AFGBuildableTrainPlatformCargo, Factory_PullPipeInput_Implementation,
-		[]( auto&, AFGBuildableTrainPlatformCargo* self, float )
+		[]( auto& /*Scope*/, AFGBuildableTrainPlatformCargo* self, float )
 		{
 			if ( self->GetmFreightCargoType() != EFreightCargoType::FCT_Liquid )
 			{
@@ -458,7 +458,7 @@ void FBFPHooks::RegisterHooks()
 	// During the LOAD pass only, point mInventory at the load buffer for the Factory_Tick (which performs
 	// the actual load transfer) and restore right after, so output/saves between ticks still see the unload buffer.
 	SUBSCRIBE_UOBJECT_METHOD( AFGBuildableTrainPlatformCargo, Factory_Tick,
-		[]( auto&, AFGBuildableTrainPlatformCargo* self, float )
+		[]( auto& /*Scope*/, AFGBuildableTrainPlatformCargo* self, float)
 		{
 			FBFPPlatform* P = GPlatforms.Find( self );
 			if ( P && P->bLoadPass && P->LoadInventory.IsValid() )
@@ -537,7 +537,7 @@ void FBFPHooks::RegisterHooks()
 
 	// Bracket the dock-sequence evaluation during the load pass so its "can we load?" checks read the load buffer.
 	SUBSCRIBE_UOBJECT_METHOD( AFGBuildableTrainPlatformCargo, UpdateDockingSequence,
-		[]( auto&, AFGBuildableTrainPlatformCargo* self )
+		[]( auto& /*Scope*/, AFGBuildableTrainPlatformCargo* self )
 		{
 			FBFPPlatform* P = GPlatforms.Find( self );
 			if ( P && P->bLoadPass )
